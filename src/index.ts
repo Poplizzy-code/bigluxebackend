@@ -29,6 +29,11 @@ app.use("/api/admin", adminRoutes);
 
 app.get("/health", (_, res) => res.json({ status: "ok" }));
 
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
-});
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err.message);
+    process.exit(1);
+  });
