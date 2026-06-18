@@ -10,6 +10,7 @@ import photoRoutes from "./routes/photos";
 import uploadRoutes from "./routes/upload";
 import seedRoutes from "./routes/seed";
 import adminRoutes from "./routes/admin";
+import userRoutes from "./routes/users";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/api/photos", photoRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/seed", seedRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/health", (_, res) => res.json({ status: "ok" }));
 

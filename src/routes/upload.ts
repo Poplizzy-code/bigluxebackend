@@ -15,11 +15,17 @@ router.post("/", requireAuth, upload.single("file"), async (req: AuthRequest, re
 
   const galleryId = req.body.galleryId || null;
   const featured = req.body.featured === "true";
+  const isVideo = req.file.mimetype.startsWith("video/");
 
   const result = await new Promise<UploadResult>((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
-        { folder: "bigluxe", resource_type: "image", quality: "auto", fetch_format: "auto" },
+        {
+          folder: "bigluxe",
+          resource_type: isVideo ? "video" : "image",
+          quality: "auto",
+          ...(isVideo ? {} : { fetch_format: "auto" }),
+        },
         (error, res) => {
           if (error || !res) reject(error);
           else resolve(res as UploadResult);
@@ -30,15 +36,23 @@ router.post("/", requireAuth, upload.single("file"), async (req: AuthRequest, re
 
   await connectDB();
 
+  const thumbnailUrl = isVideo
+    ? cloudinary.url(result.public_id, {
+        resource_type: "video",
+        transformation: [{ format: "jpg", width: 800, crop: "fill" }],
+      })
+    : getThumbnailUrl(result.public_id, 800);
+
   const photo = await Photo.create({
     galleryId: galleryId || undefined,
     publicId: result.public_id,
-    url: getOriginalUrl(result.public_id),
-    thumbnailUrl: getThumbnailUrl(result.public_id, 800),
-    watermarkedUrl: getWatermarkedUrl(result.public_id),
-    width: result.width,
-    height: result.height,
+    url: isVideo ? result.secure_url : getOriginalUrl(result.public_id),
+    thumbnailUrl,
+    watermarkedUrl: isVideo ? result.secure_url : getWatermarkedUrl(result.public_id),
+    width: result.width || 0,
+    height: result.height || 0,
     featured,
+    type: isVideo ? "video" : "image",
   });
 
   return res.status(201).json(photo);
